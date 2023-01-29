@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using CodeChallenge.Services;
 using CodeChallenge.Models;
+using CodeChallenge.Exceptions;
 
 namespace CodeChallenge.Controllers
 {
@@ -21,32 +22,49 @@ namespace CodeChallenge.Controllers
             _logger = logger;
             _compensationService = compensationService;
         }
-
+        /// <summary>
+        /// HTTP POST api/compensation
+        /// </summary>
+        /// <param name="compensation">Compensation object to post. </param>
+        /// <returns></returns>
         [HttpPost]
         public IActionResult CreateCompensation([FromBody] Compensation compensation)
         {
-            if (compensation == null || compensation.Employee == null) 
+            try
             {
-                return BadRequest("Cannot supply null compensation or employee record."); 
+                _logger.LogDebug($"Received compensation create request for employee is  '{compensation.EmployeeId}'");
+                if (compensation == null)
+                {
+                    return BadRequest("Cannot supply null compensation.");
+                }
+                _compensationService.Create(compensation);
+
+                return CreatedAtRoute("employeeid", new { employeeid = compensation.EmployeeId }, compensation);
             }
-            _logger.LogDebug($"Received employee create request for '{compensation.Employee.FirstName} {compensation.Employee.LastName}'");
-
-            _compensationService.Create(compensation);
-
-            return CreatedAtRoute("getCompensationByEmployeeId", new { id = compensation.Employee.EmployeeId }, compensation);
+            catch (EmployeeNotFoundException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch
+            {
+                return StatusCode(500);
+            }
         }
-
-        [HttpGet("{id}",Name ="getCompensationByEmployeeId")]
-        public IActionResult GetCompensationByEmployeeId(string id)
+        /// <summary>
+        /// GET {api/compensation/employee/16a596ae-edd3-4847-99fe-c4518e82c86f
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet("{employeeid}", Name = "employeeid")]
+        [Route("employeeid/{employeeid}")]
+        public IActionResult GetCompensationByEmployeeId(string employeeid)
         {
-            _logger.LogDebug($"Received compensation get request for employee with '{id}'");
+            _logger.LogDebug($"Received compensation get request for employee with '{employeeid}'");
 
-            var employee = _compensationService.GetById(id);
+            var comp = _compensationService.GetById(employeeid);
 
-            if (employee == null)
-                return NotFound();
 
-            return Ok(employee);
+            return Ok(comp);
         }
     }
 }

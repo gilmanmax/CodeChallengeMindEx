@@ -27,12 +27,13 @@ namespace CodeChallenge.Repositories
             _employeeContext.Employees.Add(employee);
             return employee;
         }
+
         /// <summary>
         /// This DOES NOT eagerly load Direct Reports
         /// </summary>
         public Employee GetById(string id)
         {            
-            var employee =  _employeeContext.Employees.SingleOrDefault(e => e.EmployeeId == id);
+            var employee =  _employeeContext.Employees.Include(p=>p.Compensation).SingleOrDefault(e => e.EmployeeId == id);
             return employee;
         }
 
@@ -41,7 +42,7 @@ namespace CodeChallenge.Repositories
         ///
         public Employee GetEmployeeByIdEagerly(string id)
         {
-            var employee = _employeeContext.Employees.Include(p => p.DirectReports).AsEnumerable().SingleOrDefault(p => p.EmployeeId == id);
+            var employee = _employeeContext.Employees.Include(p => p.DirectReports).Include(p=>p.Compensation).AsEnumerable().SingleOrDefault(p => p.EmployeeId == id);
             LoadDirectReportsForEmployee(employee);
             return employee;
         }

@@ -20,7 +20,6 @@ namespace CodeChallenge.Config
             var builder = WebApplication.CreateBuilder(args);
 
             builder.UseEmployeeDB();
-            builder.UseCompensationDB();
             
             AddServices(builder.Services);
 
